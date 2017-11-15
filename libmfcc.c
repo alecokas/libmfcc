@@ -1,6 +1,5 @@
 /*
- * libmfcc.c - Code implementation for libMFCC
- * Copyright (c) 2010 Jeremy Sawruk
+ * libmfcc.cpp - Code forked from https://github.com/jsawruk/libmfcc
  *
  * This code is released under the MIT License. 
  * For conditions of distribution and use, see the license in LICENSE
@@ -12,69 +11,92 @@
 /* 
  * Computes the specified (mth) MFCC
  *
- * spectralData - array of doubles containing the results of FFT computation. This data is already assumed to be purely real
+ * spectralData - array of floats containing the results of FFT computation. This data is already assumed to be purely real
+ * filterParams - array of floats containing the precomputed result of the mel-spaced filter bank
  * samplingRate - the rate that the original time-series data was sampled at (i.e 44100)
- * NumFilters - the number of filters to use in the computation. Recommended value = 48
+ * numFilters - the number of filters to use in the computation. Recommended value = 48
  * binSize - the size of the spectralData array, usually a power of 2
- * m - The mth MFCC coefficient to compute
+ * coefficient - The MFCC coefficient to compute
  *
  */
-double GetCoefficient(double* spectralData, unsigned int samplingRate, unsigned int NumFilters, unsigned int binSize, unsigned int m)
+float getMFCC(const float* spectralData, float* filterParams, unsigned int samplingRate, unsigned int numFilters, unsigned int binSize, unsigned int coefficient)
 {
-	double result = 0.0f;
-	double outerSum = 0.0f;
-	double innerSum = 0.0f;
+	
+	float result = 0.0f;
+	float outerSum = 0.0f;
+	float innerSum = 0.0f;
 	unsigned int k, l;
 
 	// 0 <= m < L
-	if(m >= NumFilters)
+	if(coefficient >= numFilters)
 	{
 		// This represents an error condition - the specified coefficient is greater than or equal to the number of filters. The behavior in this case is undefined.
 		return 0.0f;
 	}
 
-	result = NormalizationFactor(NumFilters, m);
+	result = getNormalizationFactor(numFilters, coefficient);
 
-	
-	for(l = 1; l <= NumFilters; l++)
+	for(l = 1; l <= numFilters; l++)
 	{
 		// Compute inner sum
 		innerSum = 0.0f;
 		for(k = 0; k < binSize - 1; k++)
 		{
-			innerSum += fabs(spectralData[k] * GetFilterParameter(samplingRate, binSize, k, l));
+			innerSum += fabs(spectralData[k] * filterParams[(binSize-1)*(l-1)+k]);
 		}
-
 		if(innerSum > 0.0f)
 		{
 			innerSum = log(innerSum); // The log of 0 is undefined, so don't use it
 		}
-
-		innerSum = innerSum * cos(((m * PI) / NumFilters) * (l - 0.5f));
-
+		innerSum = innerSum * cos(((coefficient * PI) / numFilters) * (l - 0.5f));
 		outerSum += innerSum;
 	}
-
 	result *= outerSum;
-
 	return result;
 }
+
+
+/* 
+ * Computes the Mel-spaced filter bank used to compute each MFCC
+ *
+ * filterParams - array of floats containing the precomputed result of the mel-spaced filter bank
+ * samplingRate - the rate that the original time-series data was sampled at (i.e 44100)
+ * binSize - the size of the spectralData array, usually a power of 2
+ * numFilters - the number of filters to use in the computation. Recommended value = 48
+ *
+ */
+void populateMFCCFilterParams(float* filterParams, unsigned int samplingRate, unsigned int binSize, unsigned int numFilters){
+
+    unsigned int k, l;
+	for(l = 1; l <= numFilters; l++)
+	{
+		
+		for(k = 0; k < binSize - 1; k++)
+		{
+		filterParams[(binSize-1)*(l-1)+k] = getFilterParameter(samplingRate, binSize, k, l);
+		
+		}
+		
+    }
+	
+}
+
 
 /* 
  * Computes the Normalization Factor (Equation 6)
  * Used for internal computation only - not to be called directly
  */
-double NormalizationFactor(int NumFilters, int m)
+float getNormalizationFactor(int numFilters, int m)
 {
-	double normalizationFactor = 0.0f;
+	float normalizationFactor = 0.0f;
 
 	if(m == 0)
 	{
-		normalizationFactor = sqrt(1.0f / NumFilters);
+		normalizationFactor = sqrt(1.0f / numFilters);
 	}
 	else 
 	{
-		normalizationFactor = sqrt(2.0f / NumFilters);
+		normalizationFactor = sqrt(2.0f / numFilters);
 	}
 	
 	return normalizationFactor;
@@ -84,14 +106,14 @@ double NormalizationFactor(int NumFilters, int m)
  * Compute the filter parameter for the specified frequency and filter bands (Eq. 2)
  * Used for internal computation only - not the be called directly
  */
-double GetFilterParameter(unsigned int samplingRate, unsigned int binSize, unsigned int frequencyBand, unsigned int filterBand)
+float getFilterParameter(unsigned int samplingRate, unsigned int binSize, unsigned int frequencyBand, unsigned int filterBand)
 {
-	double filterParameter = 0.0f;
+	float filterParameter = 0.0f;
 
-	double boundary = (frequencyBand * samplingRate) / binSize;		// k * Fs / N
-	double prevCenterFrequency = GetCenterFrequency(filterBand - 1);		// fc(l - 1) etc.
-	double thisCenterFrequency = GetCenterFrequency(filterBand);
-	double nextCenterFrequency = GetCenterFrequency(filterBand + 1);
+	float boundary = (frequencyBand * samplingRate) / binSize;		// k * Fs / N
+	float prevCenterFrequency = getCenterFrequency(filterBand - 1);		// fc(l - 1) etc.
+	float thisCenterFrequency = getCenterFrequency(filterBand);
+	float nextCenterFrequency = getCenterFrequency(filterBand + 1);
 
 	if(boundary >= 0 && boundary < prevCenterFrequency)
 	{
@@ -100,12 +122,12 @@ double GetFilterParameter(unsigned int samplingRate, unsigned int binSize, unsig
 	else if(boundary >= prevCenterFrequency && boundary < thisCenterFrequency)
 	{
 		filterParameter = (boundary - prevCenterFrequency) / (thisCenterFrequency - prevCenterFrequency);
-		filterParameter *= GetMagnitudeFactor(filterBand);
+		filterParameter *= getMagnitudeFactor(filterBand);
 	}
 	else if(boundary >= thisCenterFrequency && boundary < nextCenterFrequency)
 	{
 		filterParameter = (boundary - nextCenterFrequency) / (thisCenterFrequency - nextCenterFrequency);
-		filterParameter *= GetMagnitudeFactor(filterBand);
+		filterParameter *= getMagnitudeFactor(filterBand);
 	}
 	else if(boundary >= nextCenterFrequency && boundary < samplingRate)
 	{
@@ -119,9 +141,9 @@ double GetFilterParameter(unsigned int samplingRate, unsigned int binSize, unsig
  * Compute the band-dependent magnitude factor for the given filter band (Eq. 3)
  * Used for internal computation only - not the be called directly
  */
-double GetMagnitudeFactor(unsigned int filterBand)
+float getMagnitudeFactor(unsigned int filterBand)
 {
-	double magnitudeFactor = 0.0f;
+	float magnitudeFactor = 0.0f;
 	
 	if(filterBand >= 1 && filterBand <= 14)
 	{
@@ -129,7 +151,7 @@ double GetMagnitudeFactor(unsigned int filterBand)
 	}
 	else if(filterBand >= 15 && filterBand <= 48)
 	{
-		magnitudeFactor = 2.0f / (GetCenterFrequency(filterBand + 1) - GetCenterFrequency(filterBand -1));
+		magnitudeFactor = 2.0f / (getCenterFrequency(filterBand + 1) - getCenterFrequency(filterBand -1));
 	}
 
 	return magnitudeFactor;
@@ -141,10 +163,10 @@ double GetMagnitudeFactor(unsigned int filterBand)
  * center frequencies are equally spaced on the mel scale
  * Used for internal computation only - not the be called directly
  */
-double GetCenterFrequency(unsigned int filterBand)
+float getCenterFrequency(unsigned int filterBand)
 {
-	double centerFrequency = 0.0f;
-	double exponent;
+	float centerFrequency = 0.0f;
+	float exponent;
 
 	if(filterBand == 0)
 	{

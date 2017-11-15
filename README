@@ -1,7 +1,8 @@
-libMFCC - C library for computing Mel-Frequency Cepstral Coefficients
-Version 0.1 - 5 October 2010
+This is a fork of the libMFCC C library for computing Mel-Frequency Cepstral Coefficients (Version 0.1 - 5 October 2010) provided by Jeremy Sawruk at https://github.com/jsawruk/libmfcc
 
-Implementation based on:
+This repo aims to make the generation of Mel-Frequency Cepstral Coefficients (MFCCs) quicker by pre-computing the mel-spaced filterbank.
+
+Original Implementation based on:
 "Musical Instrument Identification using Multiscale Mel-Frequency Cepstral Coefficients" by Bob L. Sturm et al., 2010
 Currently available at: http://imi.aau.dk/~bst/publications/Sturm2010b.pdf
 
