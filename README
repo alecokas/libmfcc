@@ -4,7 +4,6 @@ This repo aims to make the generation of Mel-Frequency Cepstral Coefficients (MF
 
 Original Implementation based on:
 "Musical Instrument Identification using Multiscale Mel-Frequency Cepstral Coefficients" by Bob L. Sturm et al., 2010
-Currently available at: http://imi.aau.dk/~bst/publications/Sturm2010b.pdf
 
 Files in this distribution:
 
