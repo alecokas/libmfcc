@@ -7,10 +7,25 @@ Original Implementation based on:
 
 Files in this distribution:
 
-	LICENSE				=>	License to use and redistribute libMFCC (MIT License)
-	README				=>	This file
-	TODO				=>	Things not implemented in the current library
-	libmfcc.c			=>	libMFCC algorithm implementation
-	libmfcc.h			=>	libMFCC header file
-	Sturm2010b.pdf		=>	Sturm et al. reference document
-	/libmfcc_example	=>	Microsoft Visual Studio 2010 project with example code demonstrating use of libMFCC
+	LICENSE							=>	License to use and redistribute libMFCC (MIT License)
+	README							=>	This file
+	TODO							=>	Things not implemented in the current library
+
+	/C								=>	Directory containing C implementation
+		libmfcc.c					=>	libMFCC algorithm implementation
+		libmfcc.h					=>	libMFCC header file
+		/libmfcc_example			=>	Example code demonstrating use of libMFCC by reading in samples from a data file
+
+	/Arduino						=>	Directory containing an Arduino friendly implementation
+		libmfcc.c					=>	libMFCC algorithm implementation
+		libmfcc.h					=>	libMFCC header file
+		/libmfcc_example			=>	Example code demonstrating use of libMFCC
+
+	/Matlab							=>	Directory containing Matlab/Octave implementation
+		getMFCC.m					=>	Main function which extracts Mel-Frequency Ceptral Coefficients
+		getCenterFrequency.m		=>	Helper function which should not be used directly
+		getFilterParameter.m		=>	Helper function which should not be used directly
+		getMagnitudeFactor.m		=>	Helper function which should not be used directly
+		getNormalisationFactor.m	=>	Helper function which should not be used directly
+
+	Sturm2010b.pdf					=>	Sturm et al. reference document
